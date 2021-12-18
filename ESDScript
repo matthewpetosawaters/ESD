@@ -297,6 +297,7 @@ if "%value%"=="6" shutdown -r
 if "%value%"=="7" echo Ok, you can now exit.
 echo .
 echo You will be ready to install Empower3 after the restart.
+
 echo This window will now close...
 ping -n 6 127.0.0.1 > nul
 
