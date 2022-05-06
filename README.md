@@ -9,6 +9,7 @@ Creators are not responsible for the softwares misuse.
 ESD Software Roadmap:
 
 Current Releases:
+
   V1.0 Beta (Initial Release CMD line only) [Dec 2021]
 
   V1.1 Beta (Fixed run as Administrator) [ Feb 2022]
@@ -16,6 +17,7 @@ Current Releases:
   V1.2 Beta (Fixed DEP Edit) [April 2022]
 
 Future Release Plan:
+
   V1.3 Beta (Integrate Ronnys GUI or Similar) [May 2022]
 
   V1.4 Beta (Implement Auto/Update Download with Github and IIS Server) [June 2022]
