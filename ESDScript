@@ -1,5 +1,5 @@
 @echo off
-title Empower Smart Deploy [Beta V1.0]
+title Empower Smart Deploy [Beta V1.2]
 
 @echo off
 cls
@@ -252,8 +252,10 @@ echo .
 schtasks /Change /DISABLE /TN "\Microsoft\Windows\Defrag\ScheduledDefrag"
 echo Disabled Defrag...
 echo .
+
+echo Enabling DEP...
 bcdedit.exe /set {current} nx AlwaysOn
-echo Enabled DEP...
+
 ping -n 3 127.0.0.1 > nul
 echo .
 echo Adding Registry Keys...
@@ -268,13 +270,13 @@ REG IMPORT AutoUpdates.reg
 echo .
 echo .
 echo All registry policies updated...
-ping -n 1 127.0.0.1 > nul
+ping -n 3 127.0.0.1 > nul
 echo .
-ping -n 1 127.0.0.1 > nul
+ping -n 3 127.0.0.1 > nul
 echo Collecting data...
 echo.
+ping -n 3 127.0.0.1 > nul
 echo Created log file...
-ping -n 1 127.0.0.1 > nul
 echo .
 echo Placing all items in IQ folder...
 ipconfig /all > C:\Client\IQ\Ipconfig.txt
@@ -297,7 +299,5 @@ if "%value%"=="6" shutdown -r
 if "%value%"=="7" echo Ok, you can now exit.
 echo .
 echo You will be ready to install Empower3 after the restart.
-
 echo This window will now close...
 ping -n 6 127.0.0.1 > nul
-
