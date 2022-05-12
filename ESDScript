@@ -1,10 +1,18 @@
 @echo off
-title Empower Smart Deploy [Beta V1.2]
-
+title Empower Smart Deploy [Beta V1.3]
+REM ************************************************************************************************************************
+REM This program was developed to automate the preparation of the Waters Empower deployment as well as streamline the
+REM documentation processes by capturing certain elements of the installation.
+REM Developed by:          Date              Version
+REM Matthew Petosa         11-APR-2022       Beta v1.3
+REM Jean Sahab B.Sc.
+REM Ronny Vera             Devloped for Waters Corporation
+REM ************************************************************************************************************************
 @echo off
 cls
 SETLOCAL EnableDelayedExpansion
 
+:: Progress bar for initial install
 set /a "processValue=100"
 set "bar=0xDB" Character used by progress bar (SUPPORTS HEX)
 set "tbd=0xB0"
@@ -26,17 +34,174 @@ for /L %%N in (0 1 %processValue%) do (
   echo(Processing: %%N / %processValue% = !percentage!%%!LF!%ESC%[2A%ESC%[!showBar!C%bar%
   ping -3 -n 1 127.0.0.1 >nul 
 )
+:: ESD Log
 doskey /h > C:\Client\IQ\ESD_Log.txt
+:: Services Log
+net start > C:\Client\IQ\ESD_Services_Log.txt
+:: Clear screen and SET - MS command size
 cls
+
+:: Temporarily disabled window size mode as it actually fits in a normal window without scrolling.
+:: It also does not bring you to the bottom of the screen to read continue message if window is too large.
+:: #mode 400,400
+
+:: Execution User information - Tool name
 echo Welcome to Empower Smart Deploy! This setup will guide you through Empower3's pre-install checks.
+@ECHO.
+@ECHO Waters Corporation - Smart Deploy Script - Professional Services - RESTRICTED USE
+@ECHO.
+@ECHO User name: %USERDOMAIN%\%USERNAME%
+@ECHO Workstation ID : %ComputerName%
+@ECHO Current Date : %date%
+@ECHO Current Time : %time%
+
+@ECHO.
+:: Determine Workstation Timezone   - To review Server in Correct Time zone - Prompt user ?
+SETlocal
+for /f "tokens=*" %%f in ('tzutil /g') do (
+  @ECHO Timezone : %%f
+  )
+endlocal
+
+    @ECHO.
+
+    :: Define the Path of the script - and version
+    @ECHO Current Path : %CD%
+    @ECHO Script ID: %scriptname%    version: %version%
+    @ECHO.
+
+    :: This batch file details MS Windows , Hardware, and Networking configuration.
+    @ECHO.
+    @ECHO Please wait... Checking system information against Waters Empower software requirements.
+    @ECHO.
+    @ECHO This may take a minute...
+    :: Section 1: Windows 10 information
+    @ECHO ========================================================
+    @ECHO MS WINDOWS INFORMATION
+    @ECHO ========================================================
+    :: System Model will detect if virtual machine or Physical
+    :: /s will look for remote machine name - system information systeminfo / s computername
+     ::systeminfo /s %computername% | findstr /c:"Model:" /c:"Host Name" /c:"OS Name"
+    systeminfo | findstr /c:"Host Name" /c:"Domain" /c:"System Manufacturer" /c:"System Model"
+    @ECHO.
+    systeminfo | findstr /c:"OS Name"	/c:"OS Version" /c:"System Type"
+    @ECHO.
+    systeminfo | findstr /c:"Total Physical Memory" /c:"Page File"
+    @ECHO.
+    wmic memorychip get devicelocator, capacity, speed, memorytype, Manufacturer, partnumber, serialnumber
+    @ECHO.
+ 
+    :: Section 2: Hardware information.
+    @ECHO ========================================================
+    @ECHO HARDWARE INFORMATION
+    @ECHO ========================================================
+    :: Serial number good for LACE passwords
+    wmic bios get serialnumber
+    wmic cpu get caption, deviceid, name, numberofcores, maxclockspeed, status
+    @ECHO.
+    wmic diskdrive get DeviceID,  InterfaceType, Model, Size, Partitions, SerialNumber, status
+    @ECHO.
+    wmic path win32_videocontroller get name, CurrentHorizontalResolution, CurrentVerticalResolution
+    @ECHO.
+
+    :: Section 3: Networking information.
+    @ECHO ========================================================
+    @ECHO NETWORK INFORMATION
+    @ECHO ========================================================
+    ::ipconfig | findstr IPv4
+    ::ipconfig | findstr IPv6
+    @ECHO.
+    getmac /fo table /v
+    @ECHO.
+    
+    @ipconfig/all | find "Description"
+    @ECHO.
+    @ipconfig/all | find "IPv4 Address"
+    @ECHO.
+    @ipconfig/all | find "Subnet Mask"
+    @ECHO.
+    @ipconfig/all | find "Physical Address"
+    @ECHO.
+
+    WMIC LOGICALDISK where drivetype!=4 get deviceid, description, volumename, size
+    :: Can place disk info script here.
+
+    @ECHO.
+    @ECHO ========================================================
+    @ECHO Administrative Priviledges INFORMATION
+    @ECHO ========================================================
+
+    @ECHO.
+        @ECHO Waters Local Administrative permissions required. - CMD Window - for Registry, Services review -  Detecting permissions...
+        @ECHO.
+        net session
+        ::pause
+        if %errorLevel% == 0 (@ECHO Success: Administrative permissions confirmed.) 
+        if %errorlevel% == 1 (@ECHO.)
+        if %errorlevel% == 2 (@ECHO Failure: Current permissions inadequate.Please open CMD with administrative priviledges,to successfully run this script.)
+        :: @ECHO %errorlevel%
+    @ECHO.
+
+    ::find user executing in loacl admin group - to confirm - %USERNAME%
+    net localgroup "administrators" | find "%USERNAME%" 
+    @ECHO.    
+    if %username%==net localgroup "administrators" | find "%USERNAME%" 
+    If %errorLevel% == 0 (@Echo Success : username is member of local administror group.)
+    If %errorLevel% == 1 (@ECHO.)
+    if %errorLevel% == 2 (@ECHO "Attention - Local administrator is required !")
+    
+    @ECHO.
+    @ECHO ========================================================
+    @ECHO Antivirus Product INFORMATION
+    @ECHO ========================================================
+    @ECHO.
+    @ECHO The following Anti-Virus programs are installed. 
+    @ECHO ESD will only disable Windows Defender. Please contact IT to remove or disable others on this list.
+    WMIC /Node:localhost /Namespace:\\root\SecurityCenter2 Path AntiVirusProduct Get displayName /Format:List
+
+    @ECHO.
+    @ECHO ========================================================
+    @ECHO .NET Framework INFORMATION
+    @ECHO ========================================================
+    @ECHO.
+    @ECHO ESD Includes a .NET 3.5 Offline Installer for your convenince. If it is not found, please install it when prompted.
+    @ECHO
+    wmic product where "Name like 'Microsoft .Net Framework%'" get Name, Version
+    :: ?? Need to parse it / simplify output -- Seems to hang but work on cmd line
+    :: Yea there is an error where it is not detecting it either way. May need to look for and add differnet 'like names'.
+    @ECHO Using elevated command launch :  wmic product where "Name like 'Microsoft .Net Framework%'" get Name, Version
+    @ECHO.
+
+    @ECHO.
+    @ECHO ========================================================
+    @ECHO Waters Empower Services INFORMATION
+    @ECHO ========================================================
+    @ECHO.
+    @ECHO ESD Will configure the following services automatically.
+    @ECHO.
+    ::Services state(S) Current - Waters Empower
+    @ECHO Function Discovery Resource Publication :
+    sc query FDResPub | findstr /i "STATE"
+    @ECHO.
+    @ECHO UPnP Device Host : 
+    sc query upnphost | findstr /i "STATE"
+    @ECHO.
+    @ECHO SSDP Discovery :
+    sc query SSDPSRV | findstr /i "STATE"
+    @ECHO.
+    @ECHO DNS Client :
+    sc query Dnscache| findstr /i "STATE"
+    @ECHO.
+ECHO If all information above is correct...
 pause
 ENDLOCAL
 echo .
 echo .
-
+:: .NET 3.5 Install
 echo Checking for .NET 3.5...
 echo .
 @echo off
+@ECHO Please click FINISH on .NET window when it completes. It may be hidden behind the CMD prompt.
 echo wscript.quit MsgBox ("Install .NET 3.5", 4, "Please choose") > yesno.vbs
 wscript //nologo yesno.vbs
 set value=%errorlevel%
@@ -44,217 +209,75 @@ del yesno.vbs
 if "%value%"=="6" @C:\Client\DotNetInstall\dotNetFx35_W10.exe"
 if "%value%"=="7" echo .NET 3.5 has not been installed.
 echo .
-echo .
+cls
+:: Enable/Disable Services
+    @ECHO ========================================================
+    @ECHO Waters Empower Services INFORMATION - Reconfiguration
+    @ECHO ========================================================
+    @ECHO.
+    @ECHO Function Discovery Resource Publication :
+    sc config FDResPub start= auto
+    net start FDResPub
+    ::sc query FDResPub | findstr /i "STATE"
 
-echo Checking for Firewall...
-echo .
-@echo off
-echo wscript.quit MsgBox ("Disable Firewall?", 4, "Please choose") > yesno.vbs
-wscript //nologo yesno.vbs
-set value=%errorlevel%
-del yesno.vbs
-if "%value%"=="6" NetSh Advfirewall set allprofiles state off
-if "%value%"=="7" echo Your firewall has not been disabled.
-echo .
-echo .
+    @ECHO UPnP Device Host : 
+    sc config upnphost start= auto
+    net start upnphost
+    ::sc query upnphost | findstr /i "STATE"
 
-echo Checking for Network Discovery...
+    @ECHO SSDP Discovery :
+    sc config SSDPSRV  start= auto
+    net start SSDPSRV
+    ::sc query SSDPSRV | findstr /i "STATE"
+
+    ::@ECHO DNS Client :
+    sc config Dnscache start= auto
+    ::sc query Dnscache| findstr /i "STATE"
+
+ping -n 3 127.0.0.1 > nul
+ENDLOCAL
+echo Please review above for errors. Then continue to change all Group Policy, Registry Keys, DEP, and Disable Defrag.
 echo .
-@echo off
-echo wscript.quit MsgBox ("Enable Network Discovery?", 4, "Please choose") > yesno.vbs
-wscript //nologo yesno.vbs
-set value=%errorlevel%
-del yesno.vbs
-if "%value%"=="6" netsh advfirewall firewall set rule group="network discovery" new enable=Yes
-if "%value%"=="7" echo Your network discovery has not been changed.
-echo .
-echo .
-echo Continue to configure and start windows services needed for Empower. Exit to cancel.
+echo WARNING: THIS WILL ALSO DISABLE ANTIVIRUS SOFTWARE AND FIREWALLS
 pause
-
-echo Service Command
-sc config Dnscache start= auto
-net start Dnscache
-
-@echo off
 cls
-SETLOCAL EnableDelayedExpansion
+@ECHO.
+    ::Disable UAC
+    ::Enable UAC:
+    ::C:\Windows\System32\cmd.exe /k %windir%\System32\reg.exe ADD HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System /v EnableLUA /t REG_DWORD /d 1 ::/f
+    ::Disable UAC:
+    ::C:\Windows\System32\cmd.exe /k %windir%\System32\reg.exe ADD HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System /v EnableLUA /t REG_DWORD /d 0 /f
+    REG ADD HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System /v EnableLUA /t REG_DWORD /d 0 /f
+    @ECHO UAC has been Disabled...
+    @ECHO.
 
-set /a "processValue=100"
-set "bar=0xDB" Character used by progress bar (SUPPORTS HEX)
-set "tbd=0xB0"
-set "barLength=40"
-( set LF=^
-%=-----------DO NOT REMOVE THIS LINE. the LF variable is for future use in a function, it's currently useless-----------=%
-)
-FOR /F %%B in ('FORFILES /P "%~dp0." /M "%~nx0" /C "cmd /c echo(!bar!"') do set "bar=%%B"
-FOR /F %%B in ('FORFILES /P "%~dp0." /M "%~nx0" /C "cmd /c echo(!tbd!"') do set "tbd=%%B"
-FOR /F %%B in ('copy /Z "%~f0" nul') do set "CR=%%B"
-FOR /F %%B in ('prompt $E ^& ^<nul cmd /k') do set "ESC=%%B"
-for /l %%N in (0,1,%barLength%) do set "emptybar=!emptybar! "
-
-echo Starting DNS Client Service!LF!
-for /l %%N in (0 1 !barLength!) do echo(!LF!%ESC%[2A%ESC%[%%NC%tbd%
-for /L %%N in (0 1 %processValue%) do (
-  set /a showBar=%%N*barLength/processValue
-  set /a percentage=%%N*100/processValue
-  echo(Processing: %%N / %processValue% = !percentage!%%!LF!%ESC%[2A%ESC%[!showBar!C%bar%
-  ping -4 -n 1 127.0.0.1 >nul 
-)
-echo Complete.
-echo Moving to next Service...
-ping -n 3 127.0.0.1 > nul
-ENDLOCAL
-
-echo Service Command
-sc config FDResPub start= auto
-net start FDResPub
-
-@echo off
-cls
-SETLOCAL EnableDelayedExpansion
-
-set /a "processValue=100"
-set "bar=0xDB" Character used by progress bar (SUPPORTS HEX)
-set "tbd=0xB0"
-set "barLength=40"
-( set LF=^
-%=-----------DO NOT REMOVE THIS LINE. the LF variable is for future use in a function, it's currently useless-----------=%
-)
-FOR /F %%B in ('FORFILES /P "%~dp0." /M "%~nx0" /C "cmd /c echo(!bar!"') do set "bar=%%B"
-FOR /F %%B in ('FORFILES /P "%~dp0." /M "%~nx0" /C "cmd /c echo(!tbd!"') do set "tbd=%%B"
-FOR /F %%B in ('copy /Z "%~f0" nul') do set "CR=%%B"
-FOR /F %%B in ('prompt $E ^& ^<nul cmd /k') do set "ESC=%%B"
-for /l %%N in (0,1,%barLength%) do set "emptybar=!emptybar! "
-
-echo Starting Function Discovery Resource Publication Service!LF!
-for /l %%N in (0 1 !barLength!) do echo(!LF!%ESC%[2A%ESC%[%%NC%tbd%
-for /L %%N in (0 1 %processValue%) do (
-  set /a showBar=%%N*barLength/processValue
-  set /a percentage=%%N*100/processValue
-  echo(Processing: %%N / %processValue% = !percentage!%%!LF!%ESC%[2A%ESC%[!showBar!C%bar%
-  ping -4 -n 1 127.0.0.1 >nul 
-)
-echo Complete.
-echo Moving to next Service...
-ping -n 3 127.0.0.1 > nul
-ENDLOCAL
-
-echo Service Command
-sc config SSDPSRV start= auto
-net start SSDPSRV
-
-@echo off
-cls
-SETLOCAL EnableDelayedExpansion
-
-set /a "processValue=100"
-set "bar=0xDB" Character used by progress bar (SUPPORTS HEX)
-set "tbd=0xB0"
-set "barLength=40"
-( set LF=^
-%=-----------DO NOT REMOVE THIS LINE. the LF variable is for future use in a function, it's currently useless-----------=%
-)
-FOR /F %%B in ('FORFILES /P "%~dp0." /M "%~nx0" /C "cmd /c echo(!bar!"') do set "bar=%%B"
-FOR /F %%B in ('FORFILES /P "%~dp0." /M "%~nx0" /C "cmd /c echo(!tbd!"') do set "tbd=%%B"
-FOR /F %%B in ('copy /Z "%~f0" nul') do set "CR=%%B"
-FOR /F %%B in ('prompt $E ^& ^<nul cmd /k') do set "ESC=%%B"
-for /l %%N in (0,1,%barLength%) do set "emptybar=!emptybar! "
-
-echo Starting SSDP Discovery Service!LF!
-for /l %%N in (0 1 !barLength!) do echo(!LF!%ESC%[2A%ESC%[%%NC%tbd%
-for /L %%N in (0 1 %processValue%) do (
-  set /a showBar=%%N*barLength/processValue
-  set /a percentage=%%N*100/processValue
-  echo(Processing: %%N / %processValue% = !percentage!%%!LF!%ESC%[2A%ESC%[!showBar!C%bar%
-  ping -4 -n 1 127.0.0.1 >nul 
-)
-echo Complete.
-echo Moving to next Service...
-ping -n 3 127.0.0.1 > nul
-ENDLOCAL
-
-echo Service Command
-sc config upnphost start= auto
-net start upnphost
-
-@echo off
-cls
-SETLOCAL EnableDelayedExpansion
-
-set /a "processValue=100"
-set "bar=0xDB" Character used by progress bar (SUPPORTS HEX)
-set "tbd=0xB0"
-set "barLength=40"
-( set LF=^
-%=-----------DO NOT REMOVE THIS LINE. the LF variable is for future use in a function, it's currently useless-----------=%
-)
-FOR /F %%B in ('FORFILES /P "%~dp0." /M "%~nx0" /C "cmd /c echo(!bar!"') do set "bar=%%B"
-FOR /F %%B in ('FORFILES /P "%~dp0." /M "%~nx0" /C "cmd /c echo(!tbd!"') do set "tbd=%%B"
-FOR /F %%B in ('copy /Z "%~f0" nul') do set "CR=%%B"
-FOR /F %%B in ('prompt $E ^& ^<nul cmd /k') do set "ESC=%%B"
-for /l %%N in (0,1,%barLength%) do set "emptybar=!emptybar! "
-
-echo Starting UPnP Device Host Service!LF!
-for /l %%N in (0 1 !barLength!) do echo(!LF!%ESC%[2A%ESC%[%%NC%tbd%
-for /L %%N in (0 1 %processValue%) do (
-  set /a showBar=%%N*barLength/processValue
-  set /a percentage=%%N*100/processValue
-  echo(Processing: %%N / %processValue% = !percentage!%%!LF!%ESC%[2A%ESC%[!showBar!C%bar%
-  ping -4 -n 1 127.0.0.1 >nul 
-)
-echo Complete.
-echo Moving to next Service...
-ping -n 3 127.0.0.1 > nul
-ENDLOCAL
-
-echo Service Command
-sc config ui0detect start= disabled
-net stop ui0detect
-
-@echo off
-cls
-SETLOCAL EnableDelayedExpansion
-
-set /a "processValue=100"
-set "bar=0xDB" Character used by progress bar (SUPPORTS HEX)
-set "tbd=0xB0"
-set "barLength=40"
-( set LF=^
-%=-----------DO NOT REMOVE THIS LINE. the LF variable is for future use in a function, it's currently useless-----------=%
-)
-FOR /F %%B in ('FORFILES /P "%~dp0." /M "%~nx0" /C "cmd /c echo(!bar!"') do set "bar=%%B"
-FOR /F %%B in ('FORFILES /P "%~dp0." /M "%~nx0" /C "cmd /c echo(!tbd!"') do set "tbd=%%B"
-FOR /F %%B in ('copy /Z "%~f0" nul') do set "CR=%%B"
-FOR /F %%B in ('prompt $E ^& ^<nul cmd /k') do set "ESC=%%B"
-for /l %%N in (0,1,%barLength%) do set "emptybar=!emptybar! "
-
-echo Disabling Interactive Services Detection Service!LF!
-for /l %%N in (0 1 !barLength!) do echo(!LF!%ESC%[2A%ESC%[%%NC%tbd%
-for /L %%N in (0 1 %processValue%) do (
-  set /a showBar=%%N*barLength/processValue
-  set /a percentage=%%N*100/processValue
-  echo(Processing: %%N / %processValue% = !percentage!%%!LF!%ESC%[2A%ESC%[!showBar!C%bar%
-  ping -4 -n 1 127.0.0.1 >nul 
-)
-echo Complete.
-ping -n 3 127.0.0.1 > nul
-ENDLOCAL
-cls
-echo Services have all been changed successfully...
-ping -n 1 127.0.0.1 > nul
 echo .
-echo Continue to change all Group Policy, Registry Keys, DEP, and Disable Defrag.
-echo .
-echo WARNING: THIS WILL DISABLE ANTIVIRUS SOFTWARE
-pause
-echo .
+::Defrag
 schtasks /Change /DISABLE /TN "\Microsoft\Windows\Defrag\ScheduledDefrag"
 echo Disabled Defrag...
 echo .
-
+::Firewall
+NetSh Advfirewall set allprofiles state off
+echo Firewalls disabled...
+echo .
+::Network discorvery
+echo Setting Firewall Settings...
+netsh advfirewall firewall set rule group="network discovery" new enable=Yes
+   @ECHO MS Windows Firewalls Disabled for all profiles...
+::DEP
+echo .
 echo Enabling DEP...
 bcdedit.exe /set {current} nx AlwaysOn
+echo .
+::Disable Hibernation
+echo Setting Power Management...
+powercfg.exe /hibernate off
+powercfg -s 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c
+::powercfg -SETactive high performance
+@ECHO  Power management set to high performance
+
+    ::Components Log
+net start > C:\Client\IQ\ESD_Components_Log.txt
 
 ping -n 3 127.0.0.1 > nul
 echo .
@@ -269,23 +292,28 @@ echo .
 REG IMPORT AutoUpdates.reg
 echo .
 echo .
-echo All registry policies updated...
-ping -n 3 127.0.0.1 > nul
+echo All policies updated...
+ping -n 1 127.0.0.1 > nul
 echo .
-ping -n 3 127.0.0.1 > nul
+ping -n 1 127.0.0.1 > nul
 echo Collecting data...
 echo.
-ping -n 3 127.0.0.1 > nul
+ping -n 1 127.0.0.1 > nul
 echo Created log file...
 echo .
 echo Placing all items in IQ folder...
 ipconfig /all > C:\Client\IQ\Ipconfig.txt
 set > C:\Client\IQ\set.txt
 wmic bios get serialnumber > C:\Client\IQ\serial.txt
-ping -n 3 127.0.0.1 > nul
+ping -n 1 127.0.0.1 > nul
+echo .
 echo Complete...
-ping -n 3 127.0.0.1 > nul
-cls
+ping -n 1 127.0.0.1 > nul
+echo .
+echo Checking if Windows is activated...
+echo .
+::check windows is activated
+    slmgr /xpr
 echo All Empower3 pre-install checks have been completed.
 echo .
 echo Would you like to reboot now before installing Empower3?
