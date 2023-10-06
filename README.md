@@ -18,12 +18,10 @@ Current Releases:
   
   V1.3 Beta (Fixed bugs and added Jean improvements) [Mar 2023]
 
-Future Release Plan:
-
   V1.4 Beta (Implement Auto/Update Download with Github and IIS Server)
 
-  V1.5 Beta (Implement Ronny's GUI) 
+  V1.5 Beta (Implement GUI) 
 
   V1.6 Beta (Implement multi version support from FR5>3.7)
 
-  V1.7 Full Release (Encompass all features and be ready for full use to all teams with Empower 3.8) 
+  V1.8 Full Release
