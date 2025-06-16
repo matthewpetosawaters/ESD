@@ -22,6 +22,10 @@ Current Releases:
 
   V1.5 Beta (Implement GUI) 
 
-  V1.6 Beta (Implement multi version support from FR5>3.7)
+  V1.6 Beta (Implement multi version support from FR5>3.7) [May 2024]
 
-  V1.8 Full Release
+  V1.8 Full Release [June 2024]
+
+  V3.8.1 Updated Naming convention + Hotfixes [Nov 2024]
+
+  V3.9.0 Completed revamp to batch sctructure and features [June 2025]
