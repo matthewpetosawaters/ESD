@@ -2,7 +2,7 @@
 
 Created for use at Waters Corporation with the Empower3 suite software.
 
-Created by Matthew Petosa, Ronny Vera and Jean Sahab.
+Created by Matthew Petosa, with code snippets from Ronny Vera and Jean Sahab.
 
 Creators are not responsible for the softwares misuse.
 
@@ -31,3 +31,5 @@ Current Releases:
   V3.8.1 Updated Naming convention + Hotfixes [Nov 2024]
 
   V3.9.0 Completed revamp to batch sctructure and features [June 2025]
+
+  V3.10.0 - TBD
