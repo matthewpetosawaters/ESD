@@ -6,6 +6,8 @@ Created by Matthew Petosa, Ronny Vera and Jean Sahab.
 
 Creators are not responsible for the softwares misuse.
 
+![image](https://github.com/user-attachments/assets/df974d97-0660-4fad-b4f5-2de29a61a8d5)
+
 ESD Software Roadmap:
 
 Current Releases:
